@@ -1,17 +1,17 @@
-name: NerithMcCombat
-version: 1.0
-main: net.nerith.combat.NerithMcCombat
-api-version: '1.21'
-authors: [Nerith]
-softdepend: [WorldGuard]
-
 commands:
   setspawn:
     description: Set the spawn location
     permission: nerithmccombat.setspawn
   spawn:
     description: Teleport to spawn
+  nerithcombat:
+    description: NerithMcCombat main command
+    usage: /nerithcombat reload
+    aliases: [ncreload]
+    permission: nerithmccombat.reload
 
 permissions:
   nerithmccombat.setspawn:
+    default: op
+  nerithmccombat.reload:
     default: op
