@@ -9,6 +9,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
@@ -40,6 +41,7 @@ public class NerithMcCombat extends JavaPlugin {
     public void onDisable() {
         teleporting.values().forEach(BukkitTask::cancel);
         teleporting.clear();
+        teleportStart.clear();
     }
 
     public static Component color(String s) {
@@ -49,6 +51,7 @@ public class NerithMcCombat extends JavaPlugin {
     // ---------------- Spawn ----------------
 
     private void loadSpawn() {
+        spawn = null;
         if (!getConfig().contains("spawn.world")) return;
         World w = Bukkit.getWorld(getConfig().getString("spawn.world", ""));
         if (w == null) return;
@@ -76,10 +79,30 @@ public class NerithMcCombat extends JavaPlugin {
         saveConfig();
     }
 
+    private void reloadPlugin() {
+        reloadConfig();
+        loadSpawn();
+    }
+
     // ---------------- Commands ----------------
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+
+        if (cmd.getName().equalsIgnoreCase("nerithcombat")) {
+            if (!sender.hasPermission("nerithmccombat.reload")) {
+                sender.sendMessage(color("&cNo permission."));
+                return true;
+            }
+            if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
+                reloadPlugin();
+                sender.sendMessage(color("&aNerithMcCombat reloaded."));
+            } else {
+                sender.sendMessage(color("&cUsage: /nerithcombat reload"));
+            }
+            return true;
+        }
+
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Players only.");
             return true;
@@ -112,7 +135,7 @@ public class NerithMcCombat extends JavaPlugin {
 
         teleportStart.put(id, player.getLocation().clone());
 
-        BukkitTask task = new org.bukkit.scheduler.BukkitRunnable() {
+        BukkitTask task = new BukkitRunnable() {
             int seconds = 5;
 
             @Override
@@ -124,7 +147,8 @@ public class NerithMcCombat extends JavaPlugin {
                 player.sendActionBar(color("&aTeleport in &f" + seconds + " &7don't move"));
                 if (seconds <= 0) {
                     cancelTeleport(id, false);
-                    player.teleport(getSpawn());
+                    Location target = getSpawn();
+                    if (target != null) player.teleport(target);
                     return;
                 }
                 seconds--;
